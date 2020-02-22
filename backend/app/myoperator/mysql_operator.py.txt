@@ -1,0 +1,35 @@
+import pymysql as mysql
+from DBUtils.PooledDB import PooledDB
+from public import config
+
+
+class MysqlPool:
+    config = {
+        'creator': mysql,
+        'host': config.MYSQL_HOST,
+        'port': config.MYSQL_PORT,
+        'user': config.MYSQL_USER,
+        'password': config.MYSQL_PASSWD,
+        'db': config.MYSQL_DB,
+        'charset': config.MYSQL_CHARSET,
+        'maxconnections': config.MYSQL_MAXCONNECTIONS,
+        'cursorclass': mysql.cursors.DictCursor
+    }
+    pool = PooledDB(**config)
+
+    def __enter__(self):
+        self.conn = MysqlPool.pool.connection()
+        self.cursor = self.conn.cursor()
+        return self
+
+    def __exit__(self, type, value, trace):
+        self.cursor.close()
+        self.conn.close()
+
+
+def exec_sql(sql):
+    with MysqlPool() as db:
+        print(sql)
+        db.cursor.execute(sql)
+        db.conn.commit()
+    return db.cursor

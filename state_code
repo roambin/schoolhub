@@ -1,0 +1,8 @@
+20000:success成功
+40000:other error操作失败
+40001:password error用户名或密码错误
+40002:auth error没有权限
+40003:token error身份验证失败
+40004:token expired登入已过期
+40101:user exists用户已存在
+44000:server error服务器出故障了

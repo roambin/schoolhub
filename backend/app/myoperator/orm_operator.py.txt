@@ -1,0 +1,74 @@
+from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Column, Text, SMALLINT, VARCHAR, INT, DATE, ForeignKey
+from sqlalchemy.orm import sessionmaker
+from public import config
+
+Base = declarative_base()
+engine = create_engine(
+        config.MYSQL_CONN,
+        max_overflow=0,  # connection out of pool
+        pool_size=config.MYSQL_MAXCONNECTIONS,  # pool
+        pool_timeout=30,  # wait time when no threads in pool
+        pool_recycle=-1  # time to recycle threads
+    )
+Connection = sessionmaker(bind=engine)
+
+
+def init_db():
+    Base.metadata.create_all(engine)
+
+
+def drop_db():
+    Base.metadata.drop_all(engine)
+
+
+class User(Base):
+    __tablename__ = 'user'
+    userid = Column(INT, primary_key=True, autoincrement=True)
+    username = Column(VARCHAR(256), index=True, nullable=False, unique=True)
+    password = Column(VARCHAR(256), nullable=False)
+    role = Column(SMALLINT, default=1)
+    org = Column(VARCHAR(256))
+    sub_org = Column(VARCHAR(256))
+    birthday = Column(DATE)
+    # ctime = Column(DateTime, default=datetime.datetime.now)
+    __table_args__ = (
+        # UniqueConstraint('id', 'name', name='uix_id_name'), #联合唯一
+        # Index('ix_id_name', 'name', 'email'), #索引
+    )
+
+
+class Questionnair(Base):
+    __tablename__ = 'questionnair'
+    qu_id = Column(INT, primary_key=True, autoincrement=True)
+    qu_name = Column(VARCHAR(512), nullable=False)
+    qu_info = Column(Text, nullable=False)
+    qu_text = Column(Text, nullable=False, default='')
+
+
+class AuthQu(Base):
+    __tablename__ = 'auth_qu'
+    userid = Column(INT, ForeignKey('user.userid',  ondelete='CASCADE'), primary_key=True)
+    qu_id = Column(INT, ForeignKey('questionnair.qu_id',  ondelete='CASCADE'), primary_key=True)
+    qu_use = Column(SMALLINT, nullable=False, default=0)
+    qu_upload = Column(SMALLINT, nullable=False, default=0)
+
+
+class QuData(Base):
+    __tablename__ = 'qu_data'
+    userid = Column(INT, ForeignKey('user.userid',  ondelete='CASCADE'), primary_key=True)
+    qu_id = Column(INT, ForeignKey('questionnair.qu_id',  ondelete='CASCADE'), primary_key=True)
+    qu_data = Column(Text, default=None)
+
+
+if __name__ == '__main__':
+    drop_db()
+    init_db()
+    # conn = Connection()
+    # obj1 = Users(username='a', password='aaaaaa')
+    # conn.add(obj1)
+    # conn.add(obj1)
+    # conn.commit()
+    # a = conn.query(Users).one()
+    # print(a.username)
